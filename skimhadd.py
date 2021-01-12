@@ -16,10 +16,10 @@ def doFiles(filelist, out):
     isData = 'nGenPart' not in [branch.GetName()
                                 for branch in fChain.GetListOfBranches()]
 
-    d = ROOTDataFrame(fChain)
+    d = ROOT.RDataFrame(fChain)
     # Pre-selection for 2-Lep SR
-    sel = "Sum(FatJet_pt>350)>0"
-    # sel = "2+2 == 4"
+    # sel = "Sum(FatJet_pt>350)>0"
+    sel = "2+2 == 4"
     # print("Applying selection:")
     # print("  "+sel)
     filt_0 = d.Filter(sel)
@@ -27,7 +27,9 @@ def doFiles(filelist, out):
     dOut = filt_0
     # This is list of variables for Varial and BDT
     varsToSave = ['nElectron', 'nFatJet', 'nJet', 'nMuon', 'nSubJet', 'nTau', 'event', 'Electron_cutBased', 'Electron_eta', 'Electron_pt', 'FatJet_n2b1', 'FatJet_btagDDBvLV2', 'FatJet_btagDDCvBV2', 'FatJet_btagDDCvLV2', 'FatJet_eta', 'FatJet_jetId', 'FatJet_phi', 'FatJet_pt', 'HLT_AK8PFJet500',
-                  'HLT_Mu50', 'HLT_PFHT1050', 'HLT_PFJet500', 'Jet_btagDeepB', 'Jet_eta', 'Jet_jetId', 'Jet_phi', 'Jet_pt', 'Muon_eta', 'Muon_looseId', 'Muon_pfRelIso04_all', 'Muon_phi', 'Muon_pt', 'MET_pt', 'SubJet_eta', 'SubJet_mass', 'SubJet_phi', 'SubJet_pt', 'SubJet_rawFactor', 'Tau_idDecayMode', 'Tau_pt']
+                  'HLT_Mu50', 'HLT_PFHT1050', 'HLT_PFJet500', 'Jet_btagDeepB', 'Jet_eta', 'Jet_jetId', 'Jet_phi', 'Jet_pt', 'Muon_eta', 'Muon_looseId', 'Muon_pfRelIso04_all', 'Muon_phi', 'Muon_pt', 'MET_pt', 'SubJet_eta', 'SubJet_mass', 'SubJet_phi', 'SubJet_pt', 'SubJet_rawFactor', 'Tau_idDecayMode', 'Tau_pt',
+                  'FatJet_particleNetMD_Xcc', 'FatJet_particleNetMD_Xbb', 'FatJet_particleNet_HbbvsQCD' , 'FatJet_particleNet_HccvsQCD',
+                  ]
 
     if isData:
         varsToSave += ['HLT_AK8PFJet500', 'HLT_Mu50',
@@ -39,7 +41,11 @@ def doFiles(filelist, out):
                        'GenPart_pdgId',
                        'GenPart_phi',
                        'GenPart_pt',
-                       'GenPart_statusFlags']
+                       'GenPart_statusFlags',
+                       'genWeight',
+                       'Jet_hadronFlavour', 
+                       'Pileup_nPU',
+                       ]
 
     outVars = ROOT.std.vector('string')()
     for v in varsToSave:
@@ -47,6 +53,12 @@ def doFiles(filelist, out):
 
     dOut.Snapshot("Events", out, outVars)
 
+    fChain.Reset()
+
+    del fChain
+    del d 
+    del dOut
+    return 0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -56,9 +68,9 @@ if __name__ == "__main__":
                         help='an integer for the accumulator')
     args = parser.parse_args()
 
-    TH1DModel = ROOT.RDF.TH1DModel
-    ROOTDataFrame = ROOT.RDataFrame
-    usingRDF = True
+    # TH1DModel = ROOT.RDF.TH1DModel
+    # ROOTDataFrame = ROOT.RDataFrame
+    # usingRDF = True
     #ROOT.ROOT.EnableImplicitMT(1)
 
     #start = time.time()

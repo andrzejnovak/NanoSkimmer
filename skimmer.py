@@ -93,9 +93,11 @@ if __name__ == "__main__":
             Path(outpath).mkdir(parents=True, exist_ok=True)
             out = os.path.join(outpath, fnames[0].split("/")[-1].lstrip("/"))
             new_list.append(out)
- 
-            x = skim_files(filelist=fnames, out=out, ith=ith)
-            run_futures.append(x)
+            if os.path.isfile(out):
+                'File found'
+            else: 
+                x = skim_files(filelist=fnames, out=out, ith=ith)
+                run_futures.append(x)
         out_dict[key] = new_list
 
     for i, r in enumerate(run_futures):
