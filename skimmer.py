@@ -29,16 +29,17 @@ def sizeof_fmt(num, suffix=''):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Run Skim and add trees for a sample', usage="./SkimTrees.py sample_name")
+        description='Run Skim and add trees for a sample')
     parser.add_argument('-i', '--input', default=r'dummy.json', help='')
     parser.add_argument('-d', '--dir', help='Output directory', required=True)
     parser.add_argument('-o', '--output', default=r'dummy_skim.json', help='')
     parser.add_argument('--limit', type=int, default=None, help='')
-    parser.add_argument('-m', type=int, default=2000,
+    parser.add_argument('-m', type=int, default=4000,
                         help="MB size of input files to merge")
     parser.add_argument('-j', '--ncpu', type=int, default=1,
                         help="Number of CPUs to use with RDataFrame")
     parser.add_argument('--run', action='store_true', help='Bool')
+    parser.add_argument('--parsl', action='store_true', help='Scale out via parsl/slurm')
     args = parser.parse_args()
 
     start = time.time()
@@ -58,8 +59,55 @@ if __name__ == "__main__":
     print("   ", os.path.abspath(args.dir))
 
     # Setup multithreading
-    config = Config(executors=[ThreadPoolExecutor(max_threads=args.ncpu)])
-    parsl.load(config)
+    if args.parsl:
+        import parsl
+        from parsl.app.app import python_app, bash_app
+        from parsl.configs.local_threads import config
+        from parsl.providers import LocalProvider, CondorProvider, SlurmProvider
+        from parsl.channels import LocalChannel
+        from parsl.config import Config
+        from parsl.executors import HighThroughputExecutor
+        from parsl.launchers import SrunLauncher
+
+        from parsl.addresses import address_by_hostname
+
+        x509_proxy = 'x509up_u%s'%(os.getuid())
+        wrk_init = '''
+        export XRD_RUNFORKHANDLER=1
+        export X509_USER_PROXY=x509up_u31233
+        export X509_CERT_DIR=/home/anovak/certs/
+        ulimit -u 32768
+        '''
+        nproc = 36
+        sched_opts = '''
+        #SBATCH --cpus-per-task=%d
+        ''' % (nproc)
+
+        slurm_htex = Config(
+            executors=[
+                HighThroughputExecutor(
+                    label="coffea_parsl_slurm",
+                    address=address_by_hostname(),
+                    prefetch_capacity=0,
+                    max_workers=nproc,
+                    provider=SlurmProvider(
+                        channel=LocalChannel(script_dir='parsl_slurm'),
+                        launcher=SrunLauncher(),
+                        max_blocks=(args.ncpu)+5,
+                        init_blocks=args.ncpu, 
+                        partition='all',
+                        scheduler_options=sched_opts,   # Enter scheduler_options if needed
+                        worker_init=wrk_init,         # Enter worker_init if needed
+                        walltime='00:120:00'
+                    ),
+                )
+            ],
+            retries=20,
+        )
+        dfk = parsl.load(slurm_htex)
+    else:
+        config = Config(executors=[ThreadPoolExecutor(max_threads=args.ncpu)])
+        parsl.load(config)
 
     # Write futures
     out_dict = {} # Output filename list
