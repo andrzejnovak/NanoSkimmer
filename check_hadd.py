@@ -11,15 +11,17 @@ files = sys.argv[2:]
 try:
     orf = ROOT.TFile.Open(ofname)
     merged = orf.Get('Events').GetEntries()
+
+    fChain = ROOT.TChain("Events")
+    for f in files:
+        try:
+            fChain.Add(f)
+        except:
+            pass
+    incoming = fChain.GetEntries()
+
+    print(merged, incoming)
 except:
-    merged = 0
+    print(0, 0)
 
-fChain = ROOT.TChain("Events")
-for f in files:
-    try:
-        fChain.Add(f)
-    except:
-        pass
-incoming = fChain.GetEntries()
 
-print(merged, incoming)

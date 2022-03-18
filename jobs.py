@@ -36,9 +36,9 @@ def hadd_files(filelist=[], out='hadded.root', dry=False, stderr=parsl.AUTO_LOGN
 @bash_app
 def skim_files(filelist=[], out='hadded.root', dry=False, branches=None, stderr=parsl.AUTO_LOGNAME, stdout=parsl.AUTO_LOGNAME):
     if branches is None:
-        job_string = f'python -b modhaddnano {out} {" ".join(filelist)}'
+        job_string = f'python -b modhaddnano.py {out} {" ".join(filelist)}'
     else:
-        job_string = f'python -b modhaddnano {out} {" ".join(filelist)}  --branches={branches}'
+        job_string = f'python -b modhaddnano.py {out} {" ".join(filelist)}  --branches={branches}'
     if dry:
         print(job_string)
         return 0
@@ -252,11 +252,19 @@ if __name__ == "__main__":
             print(f"Total in = {total_in}, total out = {total_out}")
 
             if len(bad_outs) > 0:
-                if input("Remove bad files? (y/n)") == "y":
+                def ask_user(query):
+                    print(query)
+                    response = ''
+                    while response.lower() not in {"yes", "no"}:
+                        response = input("Please enter yes or no: ")
+                    return response.lower() == "yes"
+
+                print(f"{len(bad_outs)} bad files." )
+                if ask_user("Do you want to remove bad files?"):
                     print("Removing:")
                     for fi in bad_outs:
                         print(f"Removing: {fi}")
-                        os.system(f'rm {fi}')
+                        os.system(f'rm {fi}') 
 
     print("Done")
     end = time.time()
