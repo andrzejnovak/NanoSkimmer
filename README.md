@@ -47,3 +47,7 @@ Will submit `check_hadd.py` and report the number of events in/out.
 
 Run with `--parsl -j 4`. `-j` denotes number of nodes (all cores on node are used), so
 use a lower number.
+
+## Todo
+- Clean up `haddnano.py` python with argparse/__main__/etc...
+- Add compression as argument
